@@ -1,0 +1,11 @@
+{
+  "name": "inventory-scraper",
+  "version": "0.1.0",
+  "description": "",
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chromedriver": "^2.45.0",
+    "selenium-webdriver": "^4.0.0-alpha.1"
+  }
+}
