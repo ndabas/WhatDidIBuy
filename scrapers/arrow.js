@@ -1,28 +1,23 @@
 'use strict';
 
 const EventEmitter = require('events');
-const { By, until } = require('selenium-webdriver');
 
 module.exports = exports = new EventEmitter();
 
-exports.scrape = async function (driver) {
-    await driver.get('https://www.arrow.com/');
-    await driver.wait(until.urlContains('/account/order/order-history'));
-    await driver.wait(until.elementLocated(By.css('table > tbody > tr > td.id')));
+/**
+ * @param browser { import("puppeteer").Browser }
+ */
+exports.scrape = async function (browser) {
+    const page = await browser.newPage();
+    page.setDefaultNavigationTimeout(0);
+    await page.goto('https://www.arrow.com/');
+    const ordersResponse = await page.waitForResponse(response => response.url().startsWith('https://www.arrow.com/services/orders?format=json'), { timeout: 0 });
+    const orders = JSON.parse(await ordersResponse.text());
+    console.log(`Found ${orders.length} orders.`);
 
-    const orderIds = await driver.findElements(By.css('table > tbody > tr > td.id'));
-    const orderLinks = [];
-    for (const elem of orderIds) {
-        orderLinks.push(`https://www.arrow.com/services/orders/${await elem.getText()}?format=json&cacheBusting=${new Date().getTime()}`);
-    }
-
-    console.log(`Found ${orderLinks.length} orders.`);
-
-    const data = [];
-
-    for (const orderLink of orderLinks) {
-        await driver.get(orderLink);
-        const order = JSON.parse(await driver.findElement(By.tagName('pre')).getText());
+    for (let order of orders) {
+        await page.goto(`https://www.arrow.com/services/orders/${order.no}?format=json&cacheBusting=${new Date().getTime()}`);
+        order = JSON.parse(await page.$eval('pre', node => node.innerText));
         const orderData = {
             id: order.no,
             date: new Date(order.orderDate)

@@ -1,67 +1,60 @@
 'use strict';
 
 const EventEmitter = require('events');
-const { By, until } = require('selenium-webdriver');
 
 module.exports = exports = new EventEmitter();
 
-exports.scrape = async function (driver) {
-    await driver.get('https://www.digikey.com/MyDigiKey');
-    await driver.wait(until.elementLocated(By.css('table.dataTable')));
-    await driver.get('https://www.digikey.com/MyDigiKey/Orders');
-    await driver.wait(until.elementLocated(By.css('#DataTables_Table_0_length select')));
-    const resultCountSelector = await driver.findElement(By.css('#DataTables_Table_0_length select'));
-    await driver.executeScript("arguments[0].scrollIntoView(true);", resultCountSelector);
-    await resultCountSelector.click();
-    await driver.findElement(By.css('#DataTables_Table_0_length select > option[value="-1"]')).click();
-    await driver.wait(until.elementLocated(By.css('a.salesorderButton')));
-    const orderLinks = await driver.findElements(By.css('a.salesorderButton'));
+/**
+ * @param browser { import("puppeteer").Browser }
+ */
+exports.scrape = async function (browser) {
+    const page = await browser.newPage();
+    await page.goto('https://www.digikey.com/MyDigiKey');
+    await page.waitForSelector('table.dataTable', { timeout: 0 });
+    await page.goto('https://www.digikey.com/MyDigiKey/Orders');
+    await page.waitForSelector('#DataTables_Table_0_length select');
+    await page.select('#DataTables_Table_0_length select', '-1');
+    await page.waitForSelector('a.salesorderButton');
+    const orderLinks = await page.$$('a.salesorderButton');
 
     console.log(`Found ${orderLinks.length} orders.`);
 
-    const data = [];
-
-    const currentWindow = await driver.getWindowHandle();
     for (const orderLink of orderLinks) {
-        await driver.switchTo().window(currentWindow);
+        await page.bringToFront();
         await orderLink.click();
-        const windows = (await driver.getAllWindowHandles()).filter(win => win !== currentWindow);
-        if (windows.length !== 1) {
-            throw `Unexpected new window count: ${windows.length}`;
-        }
-        await driver.switchTo().window(windows[0]);
-        await driver.wait(until.elementLocated(By.css('.ro-cart .ro-subtotal')));
+        const orderPage = await (await browser.waitForTarget(target => target.url().endsWith('/MyDigiKey/ReviewOrder'))).page();
+        await orderPage.waitForSelector('.ro-cart .ro-subtotal');
         const orderData = {
-            id: await driver.findElement(By.css('#tblOrderHeaderInfo > div > div:nth-child(3) label')).getText(),
-            date: await driver.findElement(By.css('#tblOrderHeaderInfo > div > div:nth-child(4) > span:nth-child(2)')).getText()
+            id: await orderPage.$eval('#tblOrderHeaderInfo > div > div:nth-child(3) label', node => node.innerText),
+            date: await orderPage.$eval('#tblOrderHeaderInfo > div > div:nth-child(4) > span:nth-child(2)', node => node.innerText)
         };
 
         this.emit('order', orderData);
 
-        const items = await driver.findElements(By.css('#DataTables_Table_0 > tbody > tr'));
+        const items = await orderPage.$$('#DataTables_Table_0 > tbody > tr');
         for (const item of items) {
-            const cols = await item.findElements(By.css('td'));
-            const links = await item.findElements(By.css('a'));
-            const images = await item.findElements(By.css('img'));
+            const cols = await item.$$eval('td', nodes => nodes.map(n => n.innerText));
+            const links = await item.$$eval('a', nodes => nodes.map(n => n.getAttribute('href')));
+            const images = await item.$$eval('img', nodes => nodes.map(n => n.getAttribute('src')));
 
             if (cols.length < 11 || links.length < 1 || images.length < 1) {
                 continue;
             }
 
-            const pn = (await cols[3].getText()).split('\n');
+            const pn = cols[3].split('\n');
             this.emit('item', {
                 ord: orderData.id,
                 dpn: pn[0],
                 mpn: pn[1],
-                idx: await cols[0].getText(),
-                qty: await cols[1].getText(),
-                dsc: await cols[6].getText(),
-                upr: await cols[10].getText(),
-                lnk: await links[0].getAttribute('href'),
-                img: await images[0].getAttribute('src')
+                idx: cols[0],
+                qty: cols[1],
+                dsc: cols[6],
+                upr: cols[10],
+                lnk: links[0],
+                img: images[0]
             });
         }
 
-        driver.close();
+        orderPage.close();
     }
 };
