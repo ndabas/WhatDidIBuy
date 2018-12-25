@@ -5,6 +5,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "csv-stringify": "^5.1.2",
     "puppeteer": "^1.11.0"
   }
 }

@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const puppeteer = require('puppeteer');
+const stringify = require('csv-stringify')
 
 if (process.argv.length < 3) {
   console.error('Usage: node index.js <scraper>');
@@ -14,14 +15,18 @@ if (process.argv.length < 3) {
   const scraperName = process.argv[2];
   const scraper = require(`./scrapers/${scraperName}`);
 
-  const orders = [], items = [];
+  const orderWriter = stringify({ header: true, record_delimiter: 'windows', columns: ['id', 'date', 'status'] });
+  orderWriter.pipe(fs.createWriteStream(`./data/${scraperName}-orders.csv`));
+  const itemsWriter = stringify({ header: true, record_delimiter: 'windows', columns: ['ord', 'idx', 'dpn', 'mpn', 'mfr', 'qty', 'dsc', 'upr', 'lnk', 'img'] });
+  itemsWriter.pipe(fs.createWriteStream(`./data/${scraperName}-items.csv`));
+
   scraper.on('order', order => {
     order.id = `${scraperName}:${order.id}`;
     console.log('Processing order', order.id);
-    orders.push(order);
+    orderWriter.write(order);
   });
   scraper.on('item', item => {
-    items.push(item);
+    itemsWriter.write(item);
   });
 
   try {
@@ -32,7 +37,7 @@ if (process.argv.length < 3) {
   }
   finally {
     await browser.close();
-    fs.writeFileSync(`./data/${scraperName}-orders.json`, JSON.stringify(orders));
-    fs.writeFileSync(`./data/${scraperName}-items.json`, JSON.stringify(items));
+    orderWriter.end();
+    itemsWriter.end();
   }
 })();
