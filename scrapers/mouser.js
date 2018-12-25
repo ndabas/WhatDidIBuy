@@ -10,8 +10,12 @@ module.exports = exports = new EventEmitter();
  */
 exports.scrape = async function (browser) {
   const page = await browser.newPage();
+
+  // Mouser does not like bots. Without the next line, they wont let you in even after solving a CAPTCHA
   await utils.hideWebDriver(page);
   await page.goto('https://www.mouser.com/');
+
+  // Wait for the user to log in, and then navigate to the to order history page
   await page.waitForSelector('#lnkAccSumm', { timeout: 0 });
   await (await page.waitForSelector('#OrdrHst')).click();
 
@@ -24,7 +28,8 @@ exports.scrape = async function (browser) {
     await page.waitForSelector('#ctl00_ContentMain_SummaryInfo_trOrderTotal');
     const orderData = {
       id: await page.$eval('#ctl00_ContentMain_OrderDetailHeader_lblSalesOrderNumber', node => node.innerText),
-      date: await page.$eval('#ctl00_ContentMain_OrderDetailHeader_lblOrderDateHeader', node => node.innerText)
+      date: await page.$eval('#ctl00_ContentMain_OrderDetailHeader_lblOrderDateHeader', node => node.innerText),
+      status: await page.$eval('td.orderData', node => node.innerText.split('\n')[3])
     };
 
     this.emit('order', orderData);
