@@ -44,27 +44,17 @@ exports.scrape = async function (browser) {
     const orderPage = await (await browser.waitForTarget(target => target.url().endsWith('/MyDigiKey/ReviewOrder'))).page();
     await orderPage.waitForSelector('.ro-cart .ro-subtotal');
 
-    const items = await orderPage.$$('#DataTables_Table_0 > tbody > tr');
+    const data = await orderPage.evaluate(() => $('.ro-cart .dataTable').DataTable({ retrieve: true }).buttons.exportData());
+    const items = data.body.slice(0, -1).map(item => item.reduce((acc, cur, idx) => { acc[data.header[idx]] = cur; return acc; }, {}));
     for (const item of items) {
-      const cols = await item.$$eval('td', nodes => nodes.map(n => n.innerText));
-      const links = await item.$$eval('a', nodes => nodes.map(n => n.getAttribute('href')));
-      const images = await item.$$eval('img', nodes => nodes.map(n => n.getAttribute('src')));
-
-      if (cols.length < 11 || links.length < 1 || images.length < 1) {
-        continue;
-      }
-
-      const pn = cols[3].split('\n');
       this.emit('item', {
         ord: orderData.id,
-        dpn: pn[0],
-        mpn: pn[1],
-        idx: cols[0],
-        qty: cols[1],
-        dsc: cols[6],
-        upr: cols[10],
-        lnk: links[0],
-        img: images[0]
+        dpn: item['Part Number'],
+        mpn: item['Manufacturer Part Number'],
+        idx: item['Index'],
+        qty: item['Quantity'],
+        dsc: item['Description'],
+        upr: item['Unit Price']
       });
     }
 
