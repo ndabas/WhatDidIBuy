@@ -44,6 +44,8 @@ exports.scrape = async function (browser) {
     const orderPage = await (await browser.waitForTarget(target => target.url().endsWith('/MyDigiKey/ReviewOrder'))).page();
     await orderPage.waitForSelector('.ro-cart .ro-subtotal');
 
+    // Use the DataTables export functionality to get the data
+    // https://datatables.net/reference/api/buttons.exportData()
     const data = await orderPage.evaluate(() =>
       $('.ro-cart .dataTable').DataTable({ retrieve: true }).buttons.exportData({
         format: {
@@ -56,6 +58,9 @@ exports.scrape = async function (browser) {
         }
       })
     );
+    // The data has an array of header names, and an array of rows, each of which is an array of
+    // columns. Convert it to an array of objects for ease of use. The last item in the body array
+    // is a subtotal row, so we ignore that.
     const items = data.body.slice(0, -1).map(item => item.reduce((acc, cur, idx) => { acc[data.header[idx]] = cur; return acc; }, {}));
     for (const item of items) {
       this.emit('item', {
