@@ -14,7 +14,7 @@ exports.scrape = async function (browser) {
   await page.goto('https://in.rsdelivers.com/myaccount/myaccount?section=Orders');
 
   // Wait for the user to log in, and then navigate to the to order history page
-  await page.waitForSelector('a.aViewOrderDetails');
+  await page.waitForSelector('a.aViewOrderDetails', { timeout: 0 });
   const orderLinks = await page.$$eval('a.aViewOrderDetails', nodes => nodes.map(n => n.getAttribute('href')));
   console.log(`Found ${orderLinks.length} orders.`);
 
