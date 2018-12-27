@@ -33,7 +33,7 @@ if (process.argv.length < 3) {
     await scraper.scrape(browser);
     console.log('SUCCESS');
   } catch (err) {
-    console.error('ERROR: ' + err);
+    console.error('ERROR', err);
   }
   finally {
     await browser.close();
