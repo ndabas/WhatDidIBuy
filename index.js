@@ -15,17 +15,18 @@ if (process.argv.length < 3) {
   const scraperName = process.argv[2];
   const scraper = require(`./scrapers/${scraperName}`);
 
-  const orderWriter = stringify({ header: true, record_delimiter: 'windows', columns: ['id', 'date', 'status'] });
+  const orderWriter = stringify({ header: true, record_delimiter: 'windows', columns: ['site', 'id', 'date', 'status'] });
   orderWriter.pipe(fs.createWriteStream(`./data/${scraperName}-orders.csv`));
-  const itemsWriter = stringify({ header: true, record_delimiter: 'windows', columns: ['ord', 'idx', 'dpn', 'mpn', 'mfr', 'qty', 'dsc', 'upr', 'lnk', 'img'] });
+  const itemsWriter = stringify({ header: true, record_delimiter: 'windows', columns: ['site', 'ord', 'idx', 'dpn', 'mpn', 'mfr', 'qty', 'dsc', 'upr', 'lnk', 'img'] });
   itemsWriter.pipe(fs.createWriteStream(`./data/${scraperName}-items.csv`));
 
   scraper.on('order', order => {
-    order.id = `${scraperName}:${order.id}`;
+    order.site = scraperName;
     console.log('Processing order', order.id);
     orderWriter.write(order);
   });
   scraper.on('item', item => {
+    item.site = scraperName;
     itemsWriter.write(item);
   });
 
