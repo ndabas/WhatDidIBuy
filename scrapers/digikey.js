@@ -44,7 +44,18 @@ exports.scrape = async function (browser) {
     const orderPage = await (await browser.waitForTarget(target => target.url().endsWith('/MyDigiKey/ReviewOrder'))).page();
     await orderPage.waitForSelector('.ro-cart .ro-subtotal');
 
-    const data = await orderPage.evaluate(() => $('.ro-cart .dataTable').DataTable({ retrieve: true }).buttons.exportData());
+    const data = await orderPage.evaluate(() =>
+      $('.ro-cart .dataTable').DataTable({ retrieve: true }).buttons.exportData({
+        format: {
+          body: (innerHTML, row, col, node) =>
+            col === 2 ? $(node).find('img').attr('src') :
+              col === 3 ? $(node).find('a').attr('href') :
+                node.innerText.trim(),
+          header: (innerHTML, col, node) =>
+            col === 3 ? 'Link' : node.innerHTML.trim()
+        }
+      })
+    );
     const items = data.body.slice(0, -1).map(item => item.reduce((acc, cur, idx) => { acc[data.header[idx]] = cur; return acc; }, {}));
     for (const item of items) {
       this.emit('item', {
@@ -54,6 +65,8 @@ exports.scrape = async function (browser) {
         idx: item['Index'],
         qty: item['Quantity'],
         dsc: item['Description'],
+        lnk: item['Link'],
+        img: item['Image'],
         upr: item['Unit Price']
       });
     }
