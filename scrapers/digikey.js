@@ -1,13 +1,15 @@
 'use strict';
 
 const EventEmitter = require('events');
+const querystring = require('querystring');
+const utils = require('../utils');
 
 module.exports = exports = new EventEmitter();
 
 /**
  * @param browser { import("puppeteer").Browser }
  */
-exports.scrape = async function (browser) {
+exports.scrape = async function (browser, options) {
   const page = await browser.newPage();
 
   // Send the user to the login page
@@ -74,6 +76,30 @@ exports.scrape = async function (browser) {
         img: item['Image'],
         upr: item['Unit Price']
       });
+    }
+
+    // $$().map(form => Array.from(form.querySelectorAll('input[type="hidden"]')).reduce((acc, cur) => { acc[cur.name] = cur.value; return acc;  }, {}))
+    if (options.downloadInvoices) {
+      const invoiceForms = await orderPage.$$eval('form[action="/MyDigiKey/ReviewOrder/ViewPDF"]', forms =>
+        forms.map(form =>
+          Array.from(form.querySelectorAll('input[type="hidden"]'))
+            .reduce((acc, cur) => { acc[cur.name] = cur.value; return acc; }, {})));
+      for (const form of invoiceForms) {
+        try {
+          const invoice = await utils.downloadBlob(orderPage, '/MyDigiKey/ReviewOrder/ViewPDF', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: querystring.stringify(form)
+          });
+          invoice.ord = orderData.id;
+          invoice.id = form.invoiceId;
+          this.emit('invoice', invoice);
+        } catch (err) {
+          console.error('Error downloading invoice', err);
+        }
+      }
     }
 
     orderPage.close();

@@ -8,7 +8,7 @@ module.exports = exports = new EventEmitter();
 /**
  * @param browser { import("puppeteer").Browser }
  */
-exports.scrape = async function (browser) {
+exports.scrape = async function (browser, options) {
   const page = await browser.newPage();
 
   // Mouser does not like bots. Without the next line, they wont let you in even after solving a CAPTCHA
@@ -34,26 +34,49 @@ exports.scrape = async function (browser) {
 
     this.emit('order', orderData);
 
-    const items = await page.$$('#ctl00_ContentMain_CartGrid_grid > tbody > tr[data-index]');
+    const items = await page.$$eval('#ctl00_ContentMain_CartGrid_grid > tbody > tr[data-index]', rows => rows.map(row => {
+      // Why not simply use querySelectorAll here? querySelectorAll will return elements that match
+      // comma-separated selectors in DOM order, not in the order of the selectors specified.
+      let selectors = '.td-qty, .td-price, td.invoice, a[id$="lnkMouserPartNumber"], a[id$="lnkManufacturerPartNumber"], a[id$="lnkDescription"], a[id$="lnkInvoice"]'
+        .split(', ').map(s => row.querySelector(s));
+      return {
+        texts: selectors.map(n => n && n.innerText),
+        links: selectors.map(n => n && n.getAttribute('href'))
+      };
+    }));
+
+    const invoiceLinks = new Map();
+
     let idx = 1;
     for (const item of items) {
-      const cols = await item.$$eval('td', nodes => nodes.map(n => n.innerText));
-      const links = await item.$$eval('a', nodes => nodes.map(n => n.getAttribute('href')));
-
-      if (cols.length < 11 || links.length < 1) {
-        continue;
-      }
-
       this.emit('item', {
         ord: orderData.id,
-        dpn: await cols[3],
-        mpn: await cols[5],
+        dpn: item.texts[3],
+        mpn: item.texts[4],
         idx: idx++,
-        qty: await cols[9],
-        dsc: await cols[7],
-        upr: await cols[10],
-        lnk: await links[0]
+        qty: item.texts[0],
+        dsc: item.texts[5],
+        upr: item.texts[1],
+        lnk: item.links[3]
       });
+
+      // We wont have an invoice number if that line item is cancelled from the order
+      if (item.texts[6]) {
+        invoiceLinks.set(item.texts[6], { no: item.texts[6], href: item.links[6] });
+      }
+    }
+
+    if (options.downloadInvoices) {
+      for (const link of invoiceLinks.values()) {
+        try {
+          const invoice = await utils.downloadBlob(page, link.href);
+          invoice.ord = orderData.id;
+          invoice.id = link.no;
+          this.emit('invoice', invoice);
+        } catch (err) {
+          console.error('Error downloading invoice', err);
+        }
+      }
     }
   }
 };

@@ -1,13 +1,14 @@
 'use strict';
 
 const EventEmitter = require('events');
+const utils = require('../utils');
 
 module.exports = exports = new EventEmitter();
 
 /**
  * @param browser { import("puppeteer").Browser }
  */
-exports.scrape = async function (browser) {
+exports.scrape = async function (browser, options) {
   const page = await browser.newPage();
 
   // Arrow's pages can sometimes be slow to load, so disable the default 30-second timeout
@@ -41,6 +42,20 @@ exports.scrape = async function (browser) {
         dsc: item.description,
         upr: item.unitPrice
       });
+    }
+
+    if (options.downloadInvoices && order.webShipments && order.webShipments.length) {
+      const invoiceNos = order.webShipments.map(s => s.invoiceNo).filter(n => n);
+      for (const no of invoiceNos) {
+        try {
+          const invoice = await utils.downloadBlob(page, `https://www.arrow.com/services/invoices/${no}`);
+          invoice.ord = orderData.id;
+          invoice.id = no;
+          this.emit('invoice', invoice);
+        } catch (err) {
+          console.error('Error downloading invoice', err);
+        }
+      }
     }
   }
 };

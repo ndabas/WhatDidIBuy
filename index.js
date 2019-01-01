@@ -2,7 +2,9 @@
 
 const fs = require('fs');
 const puppeteer = require('puppeteer');
-const stringify = require('csv-stringify')
+const stringify = require('csv-stringify');
+const mime = require('mime-types');
+const mkdirp = require('mkdirp');
 
 if (process.argv.length < 3) {
   console.error('Usage: node index.js <scraper>');
@@ -25,13 +27,21 @@ if (process.argv.length < 3) {
     console.log('Processing order', order.id);
     orderWriter.write(order);
   });
+
   scraper.on('item', item => {
     item.site = scraperName;
     itemsWriter.write(item);
   });
 
+  scraper.on('invoice', invoice => {
+    const path = `./data/${scraperName}/${invoice.ord}_${invoice.id}.${mime.extension(invoice.mime)}`;
+    console.log('Saving invoice', path);
+    mkdirp.sync(`./data/${scraperName}`);
+    fs.writeFileSync(path, invoice.buffer);
+  });
+
   try {
-    await scraper.scrape(browser);
+    await scraper.scrape(browser, { downloadInvoices: true });
     console.log('SUCCESS');
   } catch (err) {
     console.error('ERROR', err);
