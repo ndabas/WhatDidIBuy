@@ -8,7 +8,7 @@ const mkdirp = require('mkdirp');
 
 if (process.argv.length < 3) {
   console.error('Usage: node index.js <scraper>');
-  return;
+  process.exit(1);
 }
 
 (async function () {
@@ -17,8 +17,11 @@ if (process.argv.length < 3) {
   const scraperName = process.argv[2];
   const scraper = require(`./scrapers/${scraperName}`);
 
+  // @ts-ignore: TypeScript isn't picking up the correct stringify.Options type
   const orderWriter = stringify({ header: true, record_delimiter: 'windows', columns: ['site', 'id', 'date', 'status'] });
   orderWriter.pipe(fs.createWriteStream(`./data/${scraperName}-orders.csv`));
+
+  // @ts-ignore: TypeScript isn't picking up the correct stringify.Options type
   const itemsWriter = stringify({ header: true, record_delimiter: 'windows', columns: ['site', 'ord', 'idx', 'dpn', 'mpn', 'mfr', 'qty', 'dsc', 'upr', 'lnk', 'img'] });
   itemsWriter.pipe(fs.createWriteStream(`./data/${scraperName}-items.csv`));
 

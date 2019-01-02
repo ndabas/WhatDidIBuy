@@ -4,11 +4,21 @@
   "description": "",
   "author": "",
   "license": "MIT",
+  "scripts": {
+    "tsc": "tsc -p ."
+  },
   "dependencies": {
     "csv-parse": "^4.2.0",
     "csv-stringify": "^5.1.2",
     "mime-types": "^2.1.21",
     "mkdirp": "^0.5.1",
     "puppeteer": "^1.11.0"
+  },
+  "devDependencies": {
+    "@types/datatables.net": "^1.10.14",
+    "@types/datatables.net-buttons": "^1.4.0",
+    "@types/jquery": "^3.3.29",
+    "@types/node": "^8.10.39",
+    "typescript": "^3.2.2"
   }
 }
