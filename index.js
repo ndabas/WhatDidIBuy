@@ -34,7 +34,8 @@ if (process.argv.length < 3) {
   });
 
   scraper.on('invoice', invoice => {
-    const path = `./data/${scraperName}/${invoice.ord}_${invoice.id}.${mime.extension(invoice.mime)}`;
+    const suffix = invoice.id ? `_${invoice.id}` : '';
+    const path = `./data/${scraperName}/${invoice.ord}${suffix}.${mime.extension(invoice.mime)}`;
     console.log('Saving invoice', path);
     mkdirp.sync(`./data/${scraperName}`);
     fs.writeFileSync(path, invoice.buffer);

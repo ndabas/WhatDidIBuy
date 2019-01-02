@@ -9,7 +9,7 @@ module.exports = exports = new EventEmitter();
 /**
  * @param browser { import("puppeteer").Browser }
  */
-exports.scrape = async function (browser) {
+exports.scrape = async function (browser, options) {
   const page = await browser.newPage();
 
   // The CAPTCHA on the login page seems to be easier to pass with the following line
@@ -44,6 +44,16 @@ exports.scrape = async function (browser) {
         dsc: item.name,
         upr: item['unit price (USD)']
       });
+    }
+
+    if (options.downloadInvoices) {
+      try {
+        const invoice = await utils.downloadBlob(page, `https://www.sparkfun.com/invoice/${order.id}`);
+        invoice.ord = order.id;
+        this.emit('invoice', invoice);
+      } catch (err) {
+        console.error('Error downloading invoice', err);
+      }
     }
   }
 };

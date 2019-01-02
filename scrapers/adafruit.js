@@ -8,7 +8,7 @@ module.exports = exports = new EventEmitter();
 /**
  * @param browser { import("puppeteer").Browser }
  */
-exports.scrape = async function (browser) {
+exports.scrape = async function (browser, options) {
   const page = await browser.newPage();
   await page.goto('https://www.adafruit.com/');
 
@@ -30,6 +30,8 @@ exports.scrape = async function (browser) {
     });
   }
 
+  const orderIds = new Set();
+
   const productsCsv = await page.evaluate(downloadText, 'https://www.adafruit.com/order_history?action=products-csv');
   const items = parse(productsCsv, { columns: true });
   console.log(`Found ${items.length} items.`);
@@ -43,5 +45,24 @@ exports.scrape = async function (browser) {
       dsc: item['product name'],
       upr: item.price
     });
+    orderIds.add(item.order);
   }
+
+  // Chrome in head-ed mode does not support saving PDFs via the DevTools protocol.
+  // We could just save the HTML page as-is but we will need to add a <base href=""> tag to resolve
+  // included images/CSS etc.
+  /*if (options.downloadInvoices) {
+    for (const orderId of orderIds) {
+      try {
+        await page.goto(`https://www.adafruit.com/invoice.php?order_id=${orderId}`);
+        this.emit('invoice', {
+          ord: orderId,
+          mime: 'application/pdf',
+          buffer: await page.pdf()
+        });
+      } catch (err) {
+        console.error('Error downloading invoice', err);
+      }
+    }
+  }*/
 };
