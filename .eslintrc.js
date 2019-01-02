@@ -81,7 +81,6 @@ module.exports = {
       // spacing details
       "space-infix-ops": 2,
       "space-in-parens": [2, "never"],
-      "space-before-function-paren": [2, "never"],
       "no-whitespace-before-property": 2,
       "keyword-spacing": [2, {
           "overrides": {
@@ -103,8 +102,8 @@ module.exports = {
       "no-multiple-empty-lines": [2, {"max": 2}],
       "no-mixed-spaces-and-tabs": 2,
       "no-trailing-spaces": 2,
-      "linebreak-style": [ process.platform === "win32" ? 0 : 2, "unix" ],
-      "indent": [2, 2, { "SwitchCase": 1, "CallExpression": {"arguments": 2}, "MemberExpression": 2 }],
+      "linebreak-style": [ 2, "unix" ],
+      "indent": [2, 2, { "SwitchCase": 1 }],
       "key-spacing": [2, {
           "beforeColon": false
       }]

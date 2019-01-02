@@ -49,8 +49,7 @@ if (process.argv.length < 3) {
     console.log('SUCCESS');
   } catch (err) {
     console.error('ERROR', err);
-  }
-  finally {
+  } finally {
     await browser.close();
     orderWriter.end();
     itemsWriter.end();

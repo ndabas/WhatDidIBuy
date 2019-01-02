@@ -1,7 +1,7 @@
 'use strict';
 
 const EventEmitter = require('events');
-const parse = require('csv-parse/lib/sync')
+const parse = require('csv-parse/lib/sync');
 const utils = require('../utils');
 
 module.exports = exports = new EventEmitter();

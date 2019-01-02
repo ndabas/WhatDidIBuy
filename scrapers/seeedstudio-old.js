@@ -20,7 +20,7 @@ exports.scrape = async function (browser) {
     Array.prototype.push.apply(orders, ordersEnvelope.data.content);
     console.log(`Loaded ${ordersEnvelope.data.content.length} orders.`);
     return ordersEnvelope;
-  }
+  };
 
   // Click the pager to get all orders
   if ((await waitForOrders()).data.total_page > 1) {
@@ -61,9 +61,8 @@ exports.scrape = async function (browser) {
       }
     }
 
-    if (order.child_order && order.child_order.length) {
+    if (order.child_order && order.child_order.length)
       order.child_order.forEach(processOrder);
-    }
   };
 
   orders.forEach(processOrder);

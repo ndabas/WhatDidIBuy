@@ -1,7 +1,7 @@
 'use strict';
 
 const EventEmitter = require('events');
-const parse = require('csv-parse/lib/sync')
+const parse = require('csv-parse/lib/sync');
 
 module.exports = exports = new EventEmitter();
 
@@ -13,7 +13,7 @@ exports.scrape = async function (browser, options) {
   await page.goto('https://www.adafruit.com/');
 
   // Wait for the user to log in and go to the order history page
-  //await page.waitForResponse('https://www.adafruit.com/order_history', { timeout: 0 });
+  // await page.waitForResponse('https://www.adafruit.com/order_history', { timeout: 0 });
   await page.waitForSelector('.history-listing', { timeout: 0 });
 
   // Download the CSV data files
@@ -51,7 +51,7 @@ exports.scrape = async function (browser, options) {
   // Chrome in head-ed mode does not support saving PDFs via the DevTools protocol.
   // We could just save the HTML page as-is but we will need to add a <base href=""> tag to resolve
   // included images/CSS etc.
-  /*if (options.downloadInvoices) {
+  /* if (options.downloadInvoices) {
     for (const orderId of orderIds) {
       try {
         await page.goto(`https://www.adafruit.com/invoice.php?order_id=${orderId}`);
@@ -64,5 +64,5 @@ exports.scrape = async function (browser, options) {
         console.error('Error downloading invoice', err);
       }
     }
-  }*/
+  } */
 };

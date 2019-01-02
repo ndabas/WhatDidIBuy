@@ -2,7 +2,7 @@
 /**
  * @param page { import("puppeteer").Page }
  */
-exports.hideWebDriver = async (page) => {
+exports.hideWebDriver = async page => {
   await page.evaluateOnNewDocument(() => {
     // @ts-ignore: Property '__proto__' does not exist on type 'Navigator'.
     const newProto = navigator.__proto__;

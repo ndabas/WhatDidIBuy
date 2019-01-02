@@ -37,11 +37,11 @@ exports.scrape = async function (browser, options) {
     const items = await page.$$eval('#ctl00_ContentMain_CartGrid_grid > tbody > tr[data-index]', rows => rows.map(row => {
       // Why not simply use querySelectorAll here? querySelectorAll will return elements that match
       // comma-separated selectors in DOM order, not in the order of the selectors specified.
-      let selectors = '.td-qty, .td-price, td.invoice, a[id$="lnkMouserPartNumber"], a[id$="lnkManufacturerPartNumber"], a[id$="lnkDescription"], a[id$="lnkInvoice"]'
+      const nodes = '.td-qty, .td-price, td.invoice, a[id$="lnkMouserPartNumber"], a[id$="lnkManufacturerPartNumber"], a[id$="lnkDescription"], a[id$="lnkInvoice"]'
         .split(', ').map(s => row.querySelector(s));
       return {
-        texts: selectors.map(n => n && n.innerText),
-        links: selectors.map(n => n && n.getAttribute('href'))
+        texts: nodes.map(n => n && n.innerText),
+        links: nodes.map(n => n && n.getAttribute('href'))
       };
     }));
 
@@ -61,9 +61,8 @@ exports.scrape = async function (browser, options) {
       });
 
       // We wont have an invoice number if that line item is cancelled from the order
-      if (item.texts[6]) {
+      if (item.texts[6])
         invoiceLinks.set(item.texts[6], { no: item.texts[6], href: item.links[6] });
-      }
     }
 
     if (options.downloadInvoices) {

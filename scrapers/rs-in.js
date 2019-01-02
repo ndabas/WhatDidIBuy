@@ -1,7 +1,6 @@
 'use strict';
 
 const EventEmitter = require('events');
-const utils = require('../utils');
 
 module.exports = exports = new EventEmitter();
 
@@ -36,9 +35,8 @@ exports.scrape = async function (browser) {
       const spans = await item.$$eval('span', nodes => nodes.reduce((acc, cur) => { acc[cur.className] = cur.innerText; return acc; }, {}));
       const links = await item.$$eval('a', nodes => nodes.map(n => ({ href: n.getAttribute('href'), innerText: n.innerText })));
 
-      if (cols.length < 4 || links.length < 1) {
+      if (cols.length < 4 || links.length < 1)
         continue;
-      }
 
       this.emit('item', {
         ord: orderData.id,
