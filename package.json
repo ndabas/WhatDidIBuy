@@ -5,7 +5,7 @@
   "author": "",
   "license": "MIT",
   "scripts": {
-    "tsc": "tsc -p ."
+    "lint": "eslint . && tsc -p ."
   },
   "dependencies": {
     "csv-parse": "^4.2.0",
@@ -19,6 +19,7 @@
     "@types/datatables.net-buttons": "^1.4.0",
     "@types/jquery": "^3.3.29",
     "@types/node": "^8.10.39",
+    "eslint": "^5.11.1",
     "typescript": "^3.2.2"
   }
 }
