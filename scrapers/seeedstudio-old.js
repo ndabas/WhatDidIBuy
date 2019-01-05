@@ -1,10 +1,11 @@
 'use strict';
 
-const EventEmitter = require('events');
+const Scraper = require('../lib/Scraper');
 
-module.exports = exports = new EventEmitter();
+module.exports = exports = new Scraper();
 
 /**
+ * @this {Scraper}
  * @param browser { import("puppeteer").Browser }
  */
 exports.scrape = async function (browser) {
@@ -41,15 +42,15 @@ exports.scrape = async function (browser) {
     if (order.product && order.product.length) {
       const orderData = {
         id: order.order_info.order_sn,
-        date: new Date(order.order_info.create_time * 1000),
+        date: new Date(order.order_info.create_time * 1000).toDateString(),
         status: order.order_info.order_status
       };
 
-      this.emit('order', orderData);
+      this.order(orderData);
 
       let idx = 1;
       for (const item of order.product) {
-        this.emit('item', {
+        this.item({
           ord: orderData.id,
           dpn: item.product_id,
           idx: idx++,

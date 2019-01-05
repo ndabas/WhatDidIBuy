@@ -1,12 +1,13 @@
 'use strict';
 
-const EventEmitter = require('events');
 const querystring = require('querystring');
 const utils = require('../utils');
+const Scraper = require('../lib/Scraper');
 
-module.exports = exports = new EventEmitter();
+module.exports = exports = new Scraper();
 
 /**
+ * @this {Scraper}
  * @param browser { import("puppeteer").Browser }
  */
 exports.scrape = async function (browser, options) {
@@ -35,11 +36,11 @@ exports.scrape = async function (browser, options) {
     await page.bringToFront();
 
     const orderData = {
-      id: await row.$eval('.dtTD-so-number', node => node.innerText),
-      date: await row.$eval('.dtTD-date', node => node.innerText),
-      status: await row.$eval('.dtTD-status', node => node.innerText)
+      id: await row.$eval('.dtTD-so-number', node => node.textContent.trim()),
+      date: await row.$eval('.dtTD-date', node => node.textContent.trim()),
+      status: await row.$eval('.dtTD-status', node => node.textContent.trim())
     };
-    this.emit('order', orderData);
+    this.order(orderData);
 
     // Click the order details button, and wait for the order details to load in a new tab
     await (await row.$('a.salesorderButton')).click();
@@ -54,7 +55,7 @@ exports.scrape = async function (browser, options) {
           body: (innerHTML, row, col, node) =>
             col === 2 ? $(node).find('img').attr('src') :
               col === 3 ? $(node).find('a').attr('href') :
-                node.innerText.trim(),
+                node.textContent.trim(),
           header: (innerHTML, col, node) =>
             col === 3 ? 'Link' : node.innerHTML.trim()
         }
@@ -65,7 +66,7 @@ exports.scrape = async function (browser, options) {
     // is a subtotal row, so we ignore that.
     const items = data.body.slice(0, -1).map(item => item.reduce((acc, cur, idx) => { acc[data.header[idx]] = cur; return acc; }, {}));
     for (const item of items) {
-      this.emit('item', {
+      this.item({
         ord: orderData.id,
         dpn: item['Part Number'],
         mpn: item['Manufacturer Part Number'],
@@ -83,7 +84,7 @@ exports.scrape = async function (browser, options) {
       const invoiceForms = await orderPage.$$eval('form[action="/MyDigiKey/ReviewOrder/ViewPDF"]', forms =>
         forms.map(form =>
           Array.from(form.querySelectorAll('input[type="hidden"]'))
-            .reduce((acc, cur) => { acc[cur.name] = cur.value; return acc; }, {})));
+            .reduce((acc, cur) => { acc[cur['name']] = cur['value']; return acc; }, {})));
       for (const form of invoiceForms) {
         try {
           const invoice = await utils.downloadBlob(orderPage, '/MyDigiKey/ReviewOrder/ViewPDF', {
@@ -93,9 +94,7 @@ exports.scrape = async function (browser, options) {
             },
             body: querystring.stringify(form)
           });
-          invoice.ord = orderData.id;
-          invoice.id = form.invoiceId;
-          this.emit('invoice', invoice);
+          this.invoice({ ord: orderData.id, id: form['invoiceId'], ...invoice });
         } catch (err) {
           console.error('Error downloading invoice', err);
         }

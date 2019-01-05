@@ -1,11 +1,12 @@
 'use strict';
 
-const EventEmitter = require('events');
 const utils = require('../utils');
+const Scraper = require('../lib/Scraper');
 
-module.exports = exports = new EventEmitter();
+module.exports = exports = new Scraper();
 
 /**
+ * @this {Scraper}
  * @param browser { import("puppeteer").Browser }
  */
 exports.scrape = async function (browser, options) {
@@ -27,12 +28,12 @@ exports.scrape = async function (browser, options) {
     await page.goto(orderLink);
     await page.waitForSelector('#ctl00_ContentMain_SummaryInfo_trOrderTotal');
     const orderData = {
-      id: await page.$eval('#ctl00_ContentMain_OrderDetailHeader_lblSalesOrderNumber', node => node.innerText),
-      date: await page.$eval('#ctl00_ContentMain_OrderDetailHeader_lblOrderDateHeader', node => node.innerText),
-      status: await page.$eval('td.orderData', node => node.innerText.split('\n')[3])
+      id: await page.$eval('#ctl00_ContentMain_OrderDetailHeader_lblSalesOrderNumber', node => node.textContent.trim()),
+      date: await page.$eval('#ctl00_ContentMain_OrderDetailHeader_lblOrderDateHeader', node => node.textContent.trim()),
+      status: await page.$eval('td.orderData', node => node.textContent.trim().split('\n')[3])
     };
 
-    this.emit('order', orderData);
+    this.order(orderData);
 
     const items = await page.$$eval('#ctl00_ContentMain_CartGrid_grid > tbody > tr[data-index]', rows => rows.map(row => {
       // Why not simply use querySelectorAll here? querySelectorAll will return elements that match
@@ -40,7 +41,7 @@ exports.scrape = async function (browser, options) {
       const nodes = '.td-qty, .td-price, td.invoice, a[id$="lnkMouserPartNumber"], a[id$="lnkManufacturerPartNumber"], a[id$="lnkDescription"], a[id$="lnkInvoice"]'
         .split(', ').map(s => row.querySelector(s));
       return {
-        texts: nodes.map(n => n && n.innerText),
+        texts: nodes.map(n => n && n.textContent.trim()),
         links: nodes.map(n => n && n.getAttribute('href'))
       };
     }));
@@ -49,7 +50,7 @@ exports.scrape = async function (browser, options) {
 
     let idx = 1;
     for (const item of items) {
-      this.emit('item', {
+      this.item({
         ord: orderData.id,
         dpn: item.texts[3],
         mpn: item.texts[4],
@@ -69,9 +70,7 @@ exports.scrape = async function (browser, options) {
       for (const link of invoiceLinks.values()) {
         try {
           const invoice = await utils.downloadBlob(page, link.href);
-          invoice.ord = orderData.id;
-          invoice.id = link.no;
-          this.emit('invoice', invoice);
+          this.invoice({ ord: orderData.id, id: link.no, ...invoice });
         } catch (err) {
           console.error('Error downloading invoice', err);
         }

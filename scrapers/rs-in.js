@@ -1,10 +1,11 @@
 'use strict';
 
-const EventEmitter = require('events');
+const Scraper = require('../lib/Scraper');
 
-module.exports = exports = new EventEmitter();
+module.exports = exports = new Scraper();
 
 /**
+ * @this {Scraper}
  * @param browser { import("puppeteer").Browser }
  */
 exports.scrape = async function (browser) {
@@ -22,28 +23,28 @@ exports.scrape = async function (browser) {
     await page.evaluate(link => window.location = link, orderLink);
     await page.waitForSelector('.divTotals');
     const orderData = {
-      id: await page.$$eval('.spanOrderId', nodes => nodes[1].innerText),
-      date: await page.$eval('.divOrderDate', node => node.innerText.split(': ')[1])
+      id: await page.$$eval('.spanOrderId', nodes => nodes[1].textContent.trim()),
+      date: await page.$eval('.divOrderDate', node => node.textContent.trim().split(': ')[1])
     };
 
-    this.emit('order', orderData);
+    this.order(orderData);
 
     const items = await page.$$('.tblTabularList > tbody > tr');
     let idx = 1;
     for (const item of items) {
-      const cols = await item.$$eval('td', nodes => nodes.map(n => n.innerText));
-      const spans = await item.$$eval('span', nodes => nodes.reduce((acc, cur) => { acc[cur.className] = cur.innerText; return acc; }, {}));
-      const links = await item.$$eval('a', nodes => nodes.map(n => ({ href: n.getAttribute('href'), innerText: n.innerText })));
+      const cols = await item.$$eval('td', nodes => nodes.map(n => n.textContent.trim()));
+      const spans = await item.$$eval('span', nodes => nodes.reduce((acc, cur) => { acc[cur.className] = cur.textContent.trim(); return acc; }, {}));
+      const links = await item.$$eval('a', nodes => nodes.map(n => ({ href: n.getAttribute('href'), text: n.textContent.trim() })));
 
       if (cols.length < 4 || links.length < 1)
         continue;
 
-      this.emit('item', {
+      this.item({
         ord: orderData.id,
-        dpn: spans.spanStockNumberValue,
+        dpn: spans['spanStockNumberValue'],
         idx: idx++,
         qty: cols[1],
-        dsc: links[0].innerText,
+        dsc: links[0].text,
         upr: cols[2],
         lnk: links[0].href
       });

@@ -1,12 +1,13 @@
 'use strict';
 
-const EventEmitter = require('events');
 const parse = require('csv-parse/lib/sync');
 const utils = require('../utils');
+const Scraper = require('../lib/Scraper');
 
-module.exports = exports = new EventEmitter();
+module.exports = exports = new Scraper();
 
 /**
+ * @this {Scraper}
  * @param browser { import("puppeteer").Browser }
  */
 exports.scrape = async function (browser, options) {
@@ -26,7 +27,7 @@ exports.scrape = async function (browser, options) {
   console.log(`Found ${orders.length} orders.`);
 
   for (const order of orders) {
-    this.emit('order', {
+    this.order({
       id: order.id,
       date: order.date,
       status: order.status
@@ -36,7 +37,7 @@ exports.scrape = async function (browser, options) {
     const items = parse(productsCsv, { columns: true });
     let idx = 1;
     for (const item of items) {
-      this.emit('item', {
+      this.item({
         ord: order.id,
         dpn: item.sku,
         idx: idx++,
@@ -49,8 +50,7 @@ exports.scrape = async function (browser, options) {
     if (options.downloadInvoices) {
       try {
         const invoice = await utils.downloadBlob(page, `https://www.sparkfun.com/invoice/${order.id}`);
-        invoice.ord = order.id;
-        this.emit('invoice', invoice);
+        this.invoice({ord: order.id, ...invoice});
       } catch (err) {
         console.error('Error downloading invoice', err);
       }

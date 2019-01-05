@@ -1,11 +1,12 @@
 'use strict';
 
-const EventEmitter = require('events');
 const utils = require('../utils');
+const Scraper = require('../lib/Scraper');
 
-module.exports = exports = new EventEmitter();
+module.exports = exports = new Scraper();
 
 /**
+ * @this {Scraper}
  * @param browser { import("puppeteer").Browser }
  */
 exports.scrape = async function (browser, options) {
@@ -23,17 +24,17 @@ exports.scrape = async function (browser, options) {
   for (let order of orders) {
     // Just query their API directly
     await page.goto(`https://www.arrow.com/services/orders/${order.no}?format=json&cacheBusting=${new Date().getTime()}`);
-    order = JSON.parse(await page.$eval('pre', node => node.innerText));
+    order = JSON.parse(await page.$eval('pre', node => node.textContent));
     const orderData = {
       id: order.no,
-      date: new Date(order.orderDate),
+      date: new Date(order.orderDate).toDateString(),
       status: order.communicatedStatus
     };
 
-    this.emit('order', orderData);
+    this.order(orderData);
 
     for (const item of order.webItems) {
-      this.emit('item', {
+      this.item({
         ord: orderData.id,
         mpn: item.detail.mpn,
         mfr: item.detail.manufacturerName,
@@ -49,9 +50,7 @@ exports.scrape = async function (browser, options) {
       for (const no of invoiceNos) {
         try {
           const invoice = await utils.downloadBlob(page, `https://www.arrow.com/services/invoices/${no}`);
-          invoice.ord = orderData.id;
-          invoice.id = no;
-          this.emit('invoice', invoice);
+          this.invoice({ ord: orderData.id, id: no, ...invoice });
         } catch (err) {
           console.error('Error downloading invoice', err);
         }

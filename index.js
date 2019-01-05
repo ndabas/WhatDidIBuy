@@ -15,6 +15,7 @@ if (process.argv.length < 3) {
   const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
 
   const scraperName = process.argv[2];
+  /** @type {import("./lib/Scraper")} */
   const scraper = require(`./scrapers/${scraperName}`);
 
   // @ts-ignore: TypeScript isn't picking up the correct stringify.Options type

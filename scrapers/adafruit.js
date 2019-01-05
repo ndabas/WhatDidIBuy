@@ -1,11 +1,12 @@
 'use strict';
 
-const EventEmitter = require('events');
 const parse = require('csv-parse/lib/sync');
+const Scraper = require('../lib/Scraper');
 
-module.exports = exports = new EventEmitter();
+module.exports = exports = new Scraper();
 
 /**
+ * @this {Scraper}
  * @param browser { import("puppeteer").Browser }
  */
 exports.scrape = async function (browser, options) {
@@ -23,7 +24,7 @@ exports.scrape = async function (browser, options) {
   const orders = parse(ordersCsv, { columns: true });
   console.log(`Found ${orders.length} orders.`);
   for (const order of orders) {
-    this.emit('order', {
+    this.order({
       id: order.order_id,
       date: order.date_purchased,
       status: order.order_status
@@ -37,7 +38,7 @@ exports.scrape = async function (browser, options) {
   console.log(`Found ${items.length} items.`);
   let idx = 1;
   for (const item of items) {
-    this.emit('item', {
+    this.item({
       ord: item.order,
       dpn: item['product id'],
       idx: idx++,
