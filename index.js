@@ -1,20 +1,30 @@
 'use strict';
 
 const fs = require('fs');
+const util = require('util');
 const puppeteer = require('puppeteer');
 const stringify = require('csv-stringify');
 const mime = require('mime-types');
 const mkdirp = require('mkdirp');
-
-if (process.argv.length < 3) {
-  console.error('Usage: node index.js <scraper>');
-  process.exit(1);
-}
+const yargs = require('yargs');
 
 (async function () {
+  const scrapers = await util.promisify(fs.readdir)('./scrapers/');
+  scrapers
+    .filter(s => s.endsWith('.js'))
+    .map(s => s.slice(0, -3))
+    .forEach(s => yargs.command(s));
+  yargs.demandCommand(1, 'Please specify a scraper module to use.');
+  yargs.option('no-invoices', { type: 'boolean', describe: 'Don\'t download invoices' });
+
+  const argv = yargs.argv;
+
   const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
 
-  const scraperName = process.argv[2];
+  const scraperName = argv._[0];
+  const scrapeOptions = {
+    downloadInvoices: argv.invoices !== false
+  };
   /** @type {import("./lib/Scraper")} */
   const scraper = require(`./scrapers/${scraperName}`);
 
@@ -46,7 +56,7 @@ if (process.argv.length < 3) {
   });
 
   try {
-    await scraper.scrape(browser, { downloadInvoices: true });
+    await scraper.scrape(browser, scrapeOptions);
     console.log('SUCCESS');
   } catch (err) {
     console.error('ERROR', err);
