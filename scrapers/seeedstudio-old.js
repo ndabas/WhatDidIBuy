@@ -42,7 +42,7 @@ exports.scrape = async function (browser) {
     if (order.product && order.product.length) {
       const orderData = {
         id: order.order_info.order_sn,
-        date: new Date(order.order_info.create_time * 1000).toDateString(),
+        date: new Date(order.order_info.create_time * 1000),
         status: order.order_info.order_status
       };
 

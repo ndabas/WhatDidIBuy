@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const util = require('util');
+const moment = require('moment');
 const puppeteer = require('puppeteer');
 const stringify = require('csv-stringify');
 const mime = require('mime-types');
@@ -28,12 +29,23 @@ const yargs = require('yargs');
   /** @type {import("./lib/Scraper")} */
   const scraper = require(`./scrapers/${scraperName}`);
 
-  // @ts-ignore: TypeScript isn't picking up the correct stringify.Options type
-  const orderWriter = stringify({ header: true, record_delimiter: 'windows', columns: ['site', 'id', 'date', 'status'] });
+  const orderWriter = stringify({
+    // @ts-ignore: TypeScript isn't picking up the correct stringify.Options type - record_delimiter is named rowDelimited in the .d.ts
+    header: true,
+    record_delimiter: 'windows',
+    columns: ['site', 'id', 'date', 'status'],
+    cast: {
+      date: value => moment(value).format('YYYY-MM-DD')
+    }
+  });
   orderWriter.pipe(fs.createWriteStream(`./data/${scraperName}-orders.csv`));
 
-  // @ts-ignore: TypeScript isn't picking up the correct stringify.Options type
-  const itemsWriter = stringify({ header: true, record_delimiter: 'windows', columns: ['site', 'ord', 'idx', 'dpn', 'mpn', 'mfr', 'qty', 'dsc', 'upr', 'lnk', 'img'] });
+  const itemsWriter = stringify({
+    // @ts-ignore: TypeScript isn't picking up the correct stringify.Options type - record_delimiter is named rowDelimited in the .d.ts
+    header: true,
+    record_delimiter: 'windows',
+    columns: ['site', 'ord', 'idx', 'dpn', 'mpn', 'mfr', 'qty', 'dsc', 'upr', 'lnk', 'img']
+  });
   itemsWriter.pipe(fs.createWriteStream(`./data/${scraperName}-items.csv`));
 
   scraper.on('order', order => {

@@ -1,5 +1,6 @@
 'use strict';
 
+const moment = require('moment');
 const parse = require('csv-parse/lib/sync');
 const utils = require('../utils');
 const Scraper = require('../lib/Scraper');
@@ -29,7 +30,7 @@ exports.scrape = async function (browser, options) {
   for (const order of orders) {
     this.order({
       id: order.id,
-      date: order.date,
+      date: moment(order.date, 'YYYY-MM-DD HH:mm:ss.SSSSZZ', true).toDate(),
       status: order.status
     });
 
@@ -50,7 +51,7 @@ exports.scrape = async function (browser, options) {
     if (options.downloadInvoices) {
       try {
         const invoice = await utils.downloadBlob(page, `https://www.sparkfun.com/invoice/${order.id}`);
-        this.invoice({ord: order.id, ...invoice});
+        this.invoice({ ord: order.id, ...invoice });
       } catch (err) {
         console.error('Error downloading invoice', err);
       }

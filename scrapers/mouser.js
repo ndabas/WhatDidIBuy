@@ -1,5 +1,6 @@
 'use strict';
 
+const moment = require('moment');
 const utils = require('../utils');
 const Scraper = require('../lib/Scraper');
 
@@ -29,7 +30,7 @@ exports.scrape = async function (browser, options) {
     await page.waitForSelector('#ctl00_ContentMain_SummaryInfo_trOrderTotal');
     const orderData = {
       id: await page.$eval('#ctl00_ContentMain_OrderDetailHeader_lblSalesOrderNumber', node => node.textContent.trim()),
-      date: await page.$eval('#ctl00_ContentMain_OrderDetailHeader_lblOrderDateHeader', node => node.textContent.trim()),
+      date: moment(await page.$eval('#ctl00_ContentMain_OrderDetailHeader_lblOrderDateHeader', node => node.textContent.trim()), 'DD-MMM-YY', true).toDate(),
       status: await page.$eval('td.orderData', node => node.textContent.trim().split('\n')[3])
     };
 

@@ -27,7 +27,7 @@ exports.scrape = async function (browser, options) {
     order = JSON.parse(await page.$eval('pre', node => node.textContent));
     const orderData = {
       id: order.no,
-      date: new Date(order.orderDate).toDateString(),
+      date: new Date(order.orderDate),
       status: order.communicatedStatus
     };
 

@@ -1,5 +1,6 @@
 'use strict';
 
+const moment = require('moment');
 const parse = require('csv-parse/lib/sync');
 const Scraper = require('../lib/Scraper');
 
@@ -26,7 +27,7 @@ exports.scrape = async function (browser, options) {
   for (const order of orders) {
     this.order({
       id: order.order_id,
-      date: order.date_purchased,
+      date: moment(order.date_purchased, 'YYYY-MM-DD HH:mm:ss', true).toDate(),
       status: order.order_status
     });
   }

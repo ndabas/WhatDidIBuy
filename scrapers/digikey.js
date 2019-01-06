@@ -1,5 +1,6 @@
 'use strict';
 
+const moment = require('moment');
 const querystring = require('querystring');
 const utils = require('../utils');
 const Scraper = require('../lib/Scraper');
@@ -37,7 +38,7 @@ exports.scrape = async function (browser, options) {
 
     const orderData = {
       id: await row.$eval('.dtTD-so-number', node => node.textContent.trim()),
-      date: await row.$eval('.dtTD-date', node => node.textContent.trim()),
+      date: moment(await row.$eval('.dtTD-date', node => node.textContent.trim()), 'M/D/YYYY', true).toDate(),
       status: await row.$eval('.dtTD-status', node => node.textContent.trim())
     };
     this.order(orderData);
