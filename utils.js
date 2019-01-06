@@ -20,6 +20,10 @@ exports.hideWebDriver = async page => {
 exports.downloadBlob = async (page, input, init) => {
   const data = await page.evaluate(async (input, init) => {
     const resp = await window.fetch(input, init);
+
+    if (!resp.ok)
+      throw new Error(`Server responded with ${resp.status} ${resp.statusText}`);
+
     const data = await resp.blob();
     const reader = new FileReader();
     return new Promise(resolve => {

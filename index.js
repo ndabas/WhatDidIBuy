@@ -5,7 +5,7 @@ const util = require('util');
 const puppeteer = require('puppeteer');
 const stringify = require('csv-stringify');
 const mime = require('mime-types');
-const mkdirp = require('mkdirp');
+const makeDir = require('make-dir');
 const yargs = require('yargs');
 
 (async function () {
@@ -47,12 +47,12 @@ const yargs = require('yargs');
     itemsWriter.write(item);
   });
 
-  scraper.on('invoice', invoice => {
+  scraper.on('invoice', async invoice => {
     const suffix = invoice.id ? `_${invoice.id}` : '';
     const path = `./data/${scraperName}/${invoice.ord}${suffix}.${mime.extension(invoice.mime)}`;
     console.log('Saving invoice', path);
-    mkdirp.sync(`./data/${scraperName}`);
-    fs.writeFileSync(path, invoice.buffer);
+    await makeDir(`./data/${scraperName}`);
+    await util.promisify(fs.writeFile)(path, invoice.buffer);
   });
 
   try {
