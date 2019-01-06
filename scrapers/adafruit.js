@@ -3,6 +3,7 @@
 const moment = require('moment');
 const parse = require('csv-parse/lib/sync');
 const Scraper = require('../lib/Scraper');
+const utils = require('../lib/utils');
 
 module.exports = exports = new Scraper();
 
@@ -18,10 +19,7 @@ exports.scrape = async function (browser, options) {
   // await page.waitForResponse('https://www.adafruit.com/order_history', { timeout: 0 });
   await page.waitForSelector('.history-listing', { timeout: 0 });
 
-  // Download the CSV data files
-  const downloadText = url => window.fetch(url).then(resp => resp.text());
-
-  const ordersCsv = await page.evaluate(downloadText, 'https://www.adafruit.com/order_history?action=orders-csv');
+  const ordersCsv = await utils.downloadText(page, 'https://www.adafruit.com/order_history?action=orders-csv');
   const orders = parse(ordersCsv, { columns: true });
   console.log(`Found ${orders.length} orders.`);
   for (const order of orders) {
@@ -34,7 +32,7 @@ exports.scrape = async function (browser, options) {
 
   const orderIds = new Set();
 
-  const productsCsv = await page.evaluate(downloadText, 'https://www.adafruit.com/order_history?action=products-csv');
+  const productsCsv = await utils.downloadText(page, 'https://www.adafruit.com/order_history?action=products-csv');
   const items = parse(productsCsv, { columns: true });
   console.log(`Found ${items.length} items.`);
   let idx = 1;

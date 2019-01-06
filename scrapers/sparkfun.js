@@ -2,8 +2,8 @@
 
 const moment = require('moment');
 const parse = require('csv-parse/lib/sync');
-const utils = require('../utils');
 const Scraper = require('../lib/Scraper');
+const utils = require('../lib/utils');
 
 module.exports = exports = new Scraper();
 
@@ -21,10 +21,7 @@ exports.scrape = async function (browser, options) {
   // Wait for the user to log in and go to the order history page
   await page.waitForSelector('a[href="https://www.sparkfun.com/orders.json"]', { timeout: 0 });
 
-  // Download the CSV data files
-  const downloadText = url => window.fetch(url).then(resp => resp.text());
-
-  const orders = JSON.parse(await page.evaluate(downloadText, 'https://www.sparkfun.com/orders.json'));
+  const orders = JSON.parse(await utils.downloadText(page, 'https://www.sparkfun.com/orders.json'));
   console.log(`Found ${orders.length} orders.`);
 
   for (const order of orders) {
@@ -34,7 +31,7 @@ exports.scrape = async function (browser, options) {
       status: order.status
     });
 
-    const productsCsv = await page.evaluate(downloadText, `https://www.sparkfun.com/orders/${order.id}.csv`);
+    const productsCsv = await utils.downloadText(page, `https://www.sparkfun.com/orders/${order.id}.csv`);
     const items = parse(productsCsv, { columns: true });
     let idx = 1;
     for (const item of items) {

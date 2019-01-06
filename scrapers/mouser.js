@@ -1,7 +1,7 @@
 'use strict';
 
 const moment = require('moment');
-const utils = require('../utils');
+const utils = require('../lib/utils');
 const Scraper = require('../lib/Scraper');
 
 module.exports = exports = new Scraper();

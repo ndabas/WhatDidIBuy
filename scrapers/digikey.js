@@ -2,7 +2,7 @@
 
 const moment = require('moment');
 const querystring = require('querystring');
-const utils = require('../utils');
+const utils = require('../lib/utils');
 const Scraper = require('../lib/Scraper');
 
 module.exports = exports = new Scraper();

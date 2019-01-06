@@ -1,6 +1,6 @@
 'use strict';
 
-const utils = require('../utils');
+const utils = require('../lib/utils');
 const Scraper = require('../lib/Scraper');
 
 module.exports = exports = new Scraper();
