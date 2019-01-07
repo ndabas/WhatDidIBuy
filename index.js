@@ -59,12 +59,20 @@ const yargs = require('yargs');
     itemsWriter.write(item);
   });
 
+  let dirMade = false;
+  const writeFile = util.promisify(fs.writeFile);
+
   scraper.on('invoice', async invoice => {
     const suffix = invoice.id ? `_${invoice.id}` : '';
     const path = `./data/${scraperName}/${invoice.ord}${suffix}.${mime.extension(invoice.mime)}`;
     console.log('Saving invoice', path);
-    await makeDir(`./data/${scraperName}`);
-    await util.promisify(fs.writeFile)(path, invoice.buffer);
+
+    if (!dirMade) {
+      await makeDir(`./data/${scraperName}`);
+      dirMade = true;
+    }
+
+    await writeFile(path, invoice.buffer);
   });
 
   try {
