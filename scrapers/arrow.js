@@ -14,6 +14,8 @@ exports.scrape = async function (browser, options) {
 
   // Arrow's pages can sometimes be slow to load, so disable the default 30-second timeout
   page.setDefaultNavigationTimeout(0);
+  // Arrow seems to detect automation and then respond with 403
+  await utils.hideWebDriver(page);
   await page.goto('https://www.arrow.com/');
 
   // Wait for the user to login and navigate to the order history page
