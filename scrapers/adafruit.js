@@ -24,8 +24,8 @@ exports.scrape = async function (browser, options) {
   console.log(`Found ${orders.length} orders.`);
   for (const order of orders) {
     this.order({
-      id: order.order_id,
-      date: moment(order.date_purchased, 'YYYY-MM-DD HH:mm:ss', true).toDate(),
+      id: order.order_id.replace(' ', '-'),
+      date: moment(order.date_purchased, 'YYYY MM DD HH:mm:ss', true).toDate(),
       status: order.order_status
     });
   }
