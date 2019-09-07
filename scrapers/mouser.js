@@ -18,10 +18,7 @@ exports.scrape = async function (browser, options) {
   await page.goto('https://www.mouser.com/');
 
   // Wait for the user to log in, and then navigate to the to order history page
-  await page.waitForSelector('#lnkAccSumm', { timeout: 0 });
-  await (await page.waitForSelector('#OrdrHst')).click();
-
-  await page.waitForSelector('#tblOrders > tbody > tr');
+  await page.waitForSelector('#tblOrders > tbody > tr', { timeout: 0 });
   const orderLinks = await page.$$eval('#tblOrders > tbody > tr > td:nth-child(2) > a', nodes => nodes.map(n => n.getAttribute('href')));
   console.log(`Found ${orderLinks.length} orders.`);
 
