@@ -30,7 +30,6 @@ const yargs = require('yargs');
   const scraper = require(`./scrapers/${scraperName}`);
 
   const orderWriter = stringify({
-    // @ts-ignore: TypeScript isn't picking up the correct stringify.Options type - record_delimiter is named rowDelimited in the .d.ts
     header: true,
     record_delimiter: 'windows',
     columns: ['site', 'id', 'date', 'status'],
@@ -41,7 +40,6 @@ const yargs = require('yargs');
   orderWriter.pipe(fs.createWriteStream(`./data/${scraperName}-orders.csv`));
 
   const itemsWriter = stringify({
-    // @ts-ignore: TypeScript isn't picking up the correct stringify.Options type - record_delimiter is named rowDelimited in the .d.ts
     header: true,
     record_delimiter: 'windows',
     columns: ['site', 'ord', 'idx', 'dpn', 'mpn', 'mfr', 'qty', 'dsc', 'upr', 'lnk', 'img']
