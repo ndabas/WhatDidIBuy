@@ -13,15 +13,10 @@ module.exports = exports = new Scraper();
  */
 exports.scrape = async function (browser, options) {
   const page = await browser.newPage();
-
-  // Send the user to the login page
-  await page.goto('https://www.digikey.com/MyDigiKey');
-
-  // Wait for the order summary table on the My Digi-Key page (which means we are logged in)
-  await page.waitForSelector('table.dataTable', { timeout: 0 });
-
-  // Go to the order list page
   await page.goto('https://www.digikey.com/MyDigiKey/Orders');
+
+  // Wait for the user to log in and navigate to the order history page
+  await page.waitForSelector('#DataTables_Table_0', { timeout: 0 });
 
   // Choose to show all orders
   await page.waitForSelector('#DataTables_Table_0_length select');
