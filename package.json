@@ -1,9 +1,13 @@
 {
-  "name": "inventory-scraper",
+  "name": "whatdidibuy",
   "version": "0.1.0",
   "description": "",
   "author": "",
   "license": "MIT",
+  "bin": "index.js",
+  "engines": {
+    "node": ">=8.10"
+  },
   "scripts": {
     "lint": "eslint . && tsc -p ."
   },

@@ -1,6 +1,8 @@
+#!/usr/bin/env node
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const util = require('util');
 const moment = require('moment');
 const puppeteer = require('puppeteer');
@@ -10,19 +12,30 @@ const makeDir = require('make-dir');
 const yargs = require('yargs');
 
 (async function () {
-  const scrapers = await util.promisify(fs.readdir)('./scrapers/');
+  const scrapers = await util.promisify(fs.readdir)(path.join(__dirname, 'scrapers'));
   scrapers
     .filter(s => s.endsWith('.js'))
     .map(s => s.slice(0, -3))
     .forEach(s => yargs.command(s));
   yargs.demandCommand(1, 'Please specify a scraper module to use.');
-  yargs.option('no-invoices', { type: 'boolean', describe: 'Don\'t download invoices' });
+  yargs.option('no-invoices', {
+    type: 'boolean',
+    describe: 'Don\'t download invoices'
+  });
+  yargs.option('d', {
+    type: 'string',
+    describe: 'Output directory for CSVs and invoices',
+    alias: 'out-dir',
+    default: '.'
+  });
+  yargs.scriptName('whatdidibuy');
 
   const argv = yargs.argv;
 
   const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
 
   const scraperName = argv._[0];
+  const basePath = path.join(argv.d, `${scraperName}`);
   const scrapeOptions = {
     downloadInvoices: argv.invoices !== false
   };
@@ -37,14 +50,14 @@ const yargs = require('yargs');
       date: value => moment(value).format('YYYY-MM-DD')
     }
   });
-  orderWriter.pipe(fs.createWriteStream(`./data/${scraperName}-orders.csv`));
+  orderWriter.pipe(fs.createWriteStream(`${basePath}-orders.csv`));
 
   const itemsWriter = stringify({
     header: true,
     record_delimiter: 'windows',
     columns: ['site', 'ord', 'idx', 'dpn', 'mpn', 'mfr', 'qty', 'dsc', 'upr', 'lnk', 'img']
   });
-  itemsWriter.pipe(fs.createWriteStream(`./data/${scraperName}-items.csv`));
+  itemsWriter.pipe(fs.createWriteStream(`${basePath}-items.csv`));
 
   scraper.on('order', order => {
     order.site = scraperName;
@@ -62,15 +75,15 @@ const yargs = require('yargs');
 
   scraper.on('invoice', async invoice => {
     const suffix = invoice.id ? `_${invoice.id}` : '';
-    const path = `./data/${scraperName}/${invoice.ord}${suffix}.${mime.extension(invoice.mime)}`;
-    console.log('Saving invoice', path);
+    const invoicePath = path.join(basePath, `${invoice.ord}${suffix}.${mime.extension(invoice.mime)}`);
+    console.log('Saving invoice', invoicePath);
 
     if (!dirMade) {
-      await makeDir(`./data/${scraperName}`);
+      await makeDir(basePath);
       dirMade = true;
     }
 
-    await writeFile(path, invoice.buffer);
+    await writeFile(invoicePath, invoice.buffer);
   });
 
   try {
