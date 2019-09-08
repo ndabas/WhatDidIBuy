@@ -1,9 +1,10 @@
 {
   "name": "whatdidibuy",
   "version": "0.1.0",
-  "description": "",
-  "author": "",
-  "license": "MIT",
+  "description": "Scrape your order history from Digi-Key, Mouser, and more",
+  "homepage": "https://github.com/ndabas/WhatDidIBuy",
+  "author": "Nikhil Dabas",
+  "license": "Apache-2.0",
   "bin": "index.js",
   "engines": {
     "node": ">=8.10"
