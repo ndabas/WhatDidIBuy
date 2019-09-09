@@ -1,11 +1,20 @@
 {
   "name": "whatdidibuy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scrape your order history from Digi-Key, Mouser, and more",
-  "homepage": "https://github.com/ndabas/WhatDidIBuy",
+  "homepage": "https://github.com/ndabas/WhatDidIBuy#readme",
   "author": "Nikhil Dabas",
   "license": "Apache-2.0",
   "bin": "index.js",
+  "files": [
+    "index.js",
+    "lib/*",
+    "scrapers/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ndabas/WhatDidIBuy.git"
+  },
   "engines": {
     "node": ">=8.10"
   },
