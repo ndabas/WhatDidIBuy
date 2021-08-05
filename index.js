@@ -22,6 +22,10 @@ const yargs = require('yargs');
     type: 'boolean',
     describe: 'Don\'t download invoices'
   });
+  yargs.option('no-sandbox', {
+    type: 'boolean',
+    describe: 'Allow chromium to run without sandbox'
+  });
   yargs.option('d', {
     type: 'string',
     describe: 'Output directory for CSVs and invoices',
@@ -32,12 +36,24 @@ const yargs = require('yargs');
 
   const argv = yargs.argv;
 
-  const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
+  let puppeteer_launch_args = [];
+  if (argv.hasOwnProperty('sandbox')) {
+    puppeteer_launch_args = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox'
+    ];
+  }
+
+  const browser = await puppeteer.launch({
+    headless: false,
+    defaultViewport: null,
+    args: puppeteer_launch_args
+  });
 
   const scraperName = argv._[0];
   const basePath = path.join(argv.d, `${scraperName}`);
   const scrapeOptions = {
-    downloadInvoices: argv.invoices !== false
+    downloadInvoices: !(argv.hasOwnProperty('invoices'))
   };
   /** @type {import("./lib/Scraper")} */
   const scraper = require(`./scrapers/${scraperName}`);
